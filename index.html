@@ -1,1 +1,686 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зеркала - Интерактивное чтение</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            position: relative;
+            scroll-behavior: smooth;
+        }
 
+        /* Анимированный фон с зеркальными отражениями */
+        .mirror-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 30% 70%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 30%, rgba(75, 0, 130, 0.08) 0%, transparent 50%),
+                        linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            z-index: -2;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(30deg); }
+        }
+
+        /* Плавающие зеркальные фрагменты */
+        .mirror-fragments {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .fragment {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            animation: mirrorFloat 15s linear infinite;
+            transform: rotate(45deg);
+        }
+
+        @keyframes mirrorFloat {
+            0% { 
+                transform: translateY(100vh) rotate(45deg) scale(0);
+                opacity: 0;
+            }
+            10%, 90% { 
+                opacity: 0.6;
+                transform: rotate(45deg) scale(1);
+            }
+            100% { 
+                transform: translateY(-100px) rotate(405deg) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Навигация */
+        .navigation {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+            padding: 15px 0;
+            border-bottom: 2px solid transparent;
+            background-image: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)),
+                              linear-gradient(90deg, #8a2be2, #4b0082, #8a2be2);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 0 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            color: #b8b8b8;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 10px 18px;
+            border-radius: 25px;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .nav-item:hover::before {
+            left: 100%;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: #fff;
+            border-color: rgba(138, 43, 226, 0.6);
+            background: rgba(138, 43, 226, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
+        }
+
+        .nav-item.active {
+            color: #dda0dd;
+            background: rgba(138, 43, 226, 0.2);
+        }
+
+        /* Основной контейнер */
+        .container {
+            max-width: 900px;
+            margin: 90px auto 0;
+            padding: 50px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Базовые стили секций */
+        .section {
+            margin-bottom: 80px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s ease;
+            padding: 40px;
+            border-radius: 20px;
+            position: relative;
+            min-height: 600px;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section h1, .section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section h1 {
+            font-size: 3em;
+            background: linear-gradient(45deg, #dda0dd, #8a2be2, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(138, 43, 226, 0.5);
+        }
+
+        .section h2 {
+            font-size: 2.2em;
+            color: #dda0dd;
+            text-shadow: 0 0 20px rgba(221, 160, 221, 0.3);
+        }
+
+        .section p {
+            line-height: 1.9;
+            margin-bottom: 25px;
+            font-size: 1.15em;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Уникальные стили для каждой главы */
+        
+        /* Заголовок */
+        #title {
+            background: radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, transparent 70%);
+            border: 2px solid transparent;
+            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+                              linear-gradient(45deg, #8a2be2, #4b0082, #dda0dd);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            text-align: center;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #title::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200px; height: 200px;
+            border: 2px solid rgba(221, 160, 221, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: mirrorPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes mirrorPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
+        }
+
+        /* Глава 1 - Безупречность */
+        #chapter1 {
+            background: linear-gradient(135deg, rgba(70, 130, 180, 0.05) 0%, rgba(25, 25, 112, 0.05) 100%);
+            border-left: 5px solid #4682b4;
+            position: relative;
+        }
+
+        #chapter1::before {
+            content: '';
+            position: absolute;
+            top: 20px; right: 20px;
+            width: 80px; height: 120px;
+            border: 3px solid rgba(70, 130, 180, 0.3);
+            border-radius: 10px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+        }
+
+        /* Глава 2 - Трещина */
+        #chapter2 {
+            background: linear-gradient(45deg, rgba(220, 20, 60, 0.03) 0%, rgba(139, 0, 0, 0.05) 100%);
+            border-left: 5px solid #dc143c;
+            position: relative;
+        }
+
+        #chapter2::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20,20 Q50,60 80,20" stroke="rgba(220,20,60,0.2)" stroke-width="2" fill="none"/></svg>') no-repeat center;
+            background-size: 200px 100px;
+            opacity: 0.3;
+        }
+
+        /* Глава 3 - Зеркало */
+        #chapter3 {
+            background: radial-gradient(circle at center, rgba(138, 43, 226, 0.08) 0%, transparent 70%);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            position: relative;
+        }
+
+        #chapter3::before {
+            content: '';
+            position: absolute;
+            top: 30px; right: 30px;
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            border: 2px solid rgba(138, 43, 226, 0.4);
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        /* Глава 4 - Метод зеркальных вопросов */
+        #chapter4 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.03) 0%, rgba(255, 140, 0, 0.05) 100%);
+            border-left: 5px solid #ffd700;
+            border-right: 5px solid #ff8c00;
+        }
+
+        #chapter4 .highlight-box {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* Глава 5 - Первые открытия */
+        #chapter5 {
+            background: linear-gradient(120deg, rgba(32, 178, 170, 0.05) 0%, rgba(0, 139, 139, 0.03) 100%);
+            border-left: 5px solid #20b2aa;
+        }
+
+        /* Глава 6 - Техника принятия тени */
+        #chapter6 {
+            background: linear-gradient(225deg, rgba(75, 0, 130, 0.08) 0%, rgba(138, 43, 226, 0.05) 100%);
+            border-left: 5px solid #4b0082;
+            border-right: 5px solid #8a2be2;
+        }
+
+        /* Глава 7 - Эмоциональный детектив */
+        #chapter7 {
+            background: linear-gradient(315deg, rgba(255, 99, 71, 0.05) 0%, rgba(255, 69, 0, 0.03) 100%);
+            border-left: 5px solid #ff6347;
+        }
+
+        /* Глава 8 - Новые отношения */
+        #chapter8 {
+            background: linear-gradient(60deg, rgba(50, 205, 50, 0.05) 0%, rgba(34, 139, 34, 0.03) 100%);
+            border-left: 5px solid #32cd32;
+        }
+
+        /* Глава 9 - Метод зеркального сострадания */
+        #chapter9 {
+            background: linear-gradient(180deg, rgba(186, 85, 211, 0.08) 0%, rgba(147, 112, 219, 0.05) 100%);
+            border-left: 5px solid #ba55d3;
+            border-right: 5px solid #9370db;
+        }
+
+        /* Глава 10 - Прощение */
+        #chapter10 {
+            background: linear-gradient(270deg, rgba(255, 182, 193, 0.05) 0%, rgba(255, 160, 122, 0.03) 100%);
+            border-left: 5px solid #ffb6c1;
+        }
+
+        /* Глава 11 - Новые отношения */
+        #chapter11 {
+            background: linear-gradient(45deg, rgba(64, 224, 208, 0.05) 0%, rgba(72, 209, 204, 0.03) 100%);
+            border-left: 5px solid #40e0d0;
+        }
+
+        /* Эпилог */
+        #epilogue {
+            background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.1) 0%, rgba(255, 140, 0, 0.05) 50%, transparent 100%);
+            border: 2px solid transparent;
+            background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                              linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            text-align: center;
+        }
+
+        /* Приложение */
+        #appendix {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(75, 0, 130, 0.05) 100%);
+            border: 2px dashed rgba(138, 43, 226, 0.4);
+        }
+
+        /* Специальные элементы */
+        .quote {
+            font-style: italic;
+            font-size: 1.3em;
+            margin: 30px 0;
+            padding: 25px;
+            border-left: 4px solid #8a2be2;
+            background: rgba(138, 43, 226, 0.05);
+            border-radius: 0 15px 15px 0;
+            position: relative;
+        }
+
+        .quote::before {
+            content: '"';
+            position: absolute;
+            top: -10px; left: 10px;
+            font-size: 3em;
+            color: #8a2be2;
+            opacity: 0.3;
+        }
+
+        .technique-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .technique-box h3 {
+            color: #dda0dd;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .technique-list {
+            list-style: none;
+            padding-left: 20px;
+        }
+
+        .technique-list li {
+            margin: 15px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .technique-list li::before {
+            content: '◆';
+            position: absolute;
+            left: 0;
+            color: #8a2be2;
+            font-size: 1.2em;
+        }
+
+        /* Интерактивные элементы */
+        .mirror-reflection {
+            position: relative;
+            display: inline-block;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mirror-reflection:hover {
+            transform: scale(1.05);
+            text-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+        }
+
+        .mirror-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 25px 0;
+            transform: perspective(1000px) rotateY(5deg);
+            transition: all 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .mirror-card:hover {
+            transform: perspective(1000px) rotateY(0deg) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2);
+        }
+
+        /* Прогресс чтения */
+        .reading-progress {
+            position: fixed;
+            top: 74px; left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #8a2be2, #dda0dd);
+            z-index: 999;
+            transition: width 0.3s ease;
+        }
+
+        /* Мобильная навигация */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+            padding: 12px 20px;
+            border-bottom: 2px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .mobile-nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mobile-nav-menu {
+            color: #dda0dd;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(138, 43, 226, 0.5);
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .mobile-nav-menu:hover {
+            background: rgba(138, 43, 226, 0.2);
+        }
+
+        .mobile-nav-title {
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .mobile-dropdown {
+            position: absolute;
+            top: 100%; left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .mobile-dropdown.active {
+            max-height: 800px;
+        }
+
+        .mobile-dropdown-item {
+            display: block;
+            color: #b8b8b8;
+            text-decoration: none;
+            padding: 15px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .mobile-dropdown-item:hover {
+            background: rgba(138, 43, 226, 0.1);
+            color: #fff;
+            transform: translateX(10px);
+        }
+
+        /* Signature */
+        .author-signature {
+            margin-top: 100px;
+            text-align: center;
+            padding: 60px 20px;
+            border-top: 2px solid transparent;
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+                              linear-gradient(90deg, transparent, #8a2be2, transparent);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+        }
+
+        .signature-line {
+            width: 300px;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #8a2be2, #dda0dd, #8a2be2, transparent);
+            margin: 0 auto 30px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .navigation { display: none; }
+            .mobile-nav { display: block; }
+            .container { 
+                padding: 20px 15px; 
+                margin-top: 70px; 
+            }
+            .section { 
+                padding: 25px 20px;
+                margin-bottom: 50px;
+                min-height: 400px;
+            }
+            .section h1 { font-size: 2.2em; }
+            .section h2 { font-size: 1.8em; }
+            .nav-container { gap: 8px; }
+            .nav-item { 
+                font-size: 12px; 
+                padding: 8px 14px; 
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section h1 { font-size: 1.8em; }
+            .section h2 { font-size: 1.5em; }
+            .section p { font-size: 1.05em; }
+        }
+
+        /* Анимация появления текста */
+        .text-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .text-reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Специальный эффект для важных цитат */
+        .shadow-quote {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            font-style: italic;
+            color: #dda0dd;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shadow-quote::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -100%;
+            width: 100%; height: calc(100% + 4px);
+            background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.3), transparent);
+            animation: shadowSweep 3s ease-in-out infinite;
+        }
+
+        @keyframes shadowSweep {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mirror-bg"></div>
+    <div class="mirror-fragments"></div>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- Мобильная навигация -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-content">
+            <div class="mobile-nav-menu" onclick="toggleMobileMenu()">Главы ▼</div>
+            <div class="mobile-nav-title">Зеркала</div>
+        </div>
+        <div class="mobile-dropdown" id="mobileDropdown">
+            <a href="#title" class="mobile-dropdown-item" onclick="closeMobileMenu()">Начало</a>
+            <a href="#chapter1" class="mobile-dropdown-item" onclick="closeMobileMenu()">1. Безупречность</a>
+            <a href="#chapter2" class="mobile-dropdown-item" onclick="closeMobileMenu()">2. Трещина</a>
+            <a href="#chapter3" class="mobile-dropdown-item" onclick="closeMobileMenu()">3. Зеркало</a>
+            <a href="#chapter4" class="mobile-dropdown-item" onclick="closeMobileMenu()">4. Зеркальные вопросы</a>
+            <a href="#chapter5" class="mobile-dropdown-item" onclick="closeMobileMenu()">5. Первые открытия</a>
+            <a href="#chapter6" class="mobile-dropdown-item" onclick="closeMobileMenu()">6. Принятие тени</a>
+            <a href="#chapter7" class="mobile-dropdown-item" onclick="closeMobileMenu()">7. Эмоциональный детектив</a>
+            <a href="#chapter8" class="mobile-dropdown-item" onclick="closeMobileMenu()">8. Новые отношения</a>
+            <a href="#chapter9" class="mobile-dropdown-item" onclick="closeMobileMenu()">9. Зеркальное сострадание</a>
+            <a href="#chapter10" class="mobile-dropdown-item" onclick="closeMobileMenu()">10. Прощение</a>
+            <a href="#chapter11" class="mobile-dropdown-item" onclick="closeMobileMenu()">11. Интеграция</a>
+            <a href="#epilogue" class="mobile-dropdown-item" onclick="closeMobileMenu()">Эпилог</a>
+            <a href="#appendix" class="mobile-dropdown-item" onclick="closeMobileMenu()">Методики</a>
+        </div>
+    </nav>
+
+    <!-- Основная навигация -->
+    <nav class="navigation">
+        <div class="nav-container">
+            <a href="#title" class="nav-item active">Начало</a>
+            <a href="#chapter1" class="nav-item">1. Безупречность</a>
+            <a href="#chapter2" class="nav-item">2. Трещина</a>
+            <a href="#chapter3" class="nav-item">3. Зеркало</a>
+            <a href="#chapter4" class="nav-item">4. Зеркальные вопросы</a>
+            <a href="#chapter5" class="nav-item">5. Первые открытия</a>
+            <a href="#chapter6" class="nav-item">6. Принятие тени</a>
+            <a href="#chapter7" class="nav-item">7. Эмоциональный детектив</a>
+            <a href="#chapter8" class="nav-item">8. Новые отношения</a>
+            <a href="#chapter9" class="nav-item">9. Зеркальное сострадание</a>
+            <a href="#chapter10" class="nav-item">10. Прощение</a>
+            <a href="#chapter11" class="nav-item">11. Интеграция</a>
+            <a href="#epilogue" class="nav-item">Эпилог</a>
+            <a href="#appendix" class="nav-item">Методики</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Заголовок -->
+        <section id="title" class="section">
+            <h1>Зеркала</h1>
+            <p style="text-align: center; font-size: 1.3em; color: #dda0dd; margin-top: 30px;">
+                <em>История о пути от проекций к принятию себя</em>
+            </p>
+        </section>
+
+        <!-- Глава 1 -->
+        <section id="chapter1" class="section">
+            <h2>Глава первая. Безупречность</h2>
+            
+            <p>Марина Светлова сидела в своём кабинете на сорок втором этаже, глядя на город через панорамные окна. Директор крупнейшего благотворительного фонда, лауреат премии "Женщина года", мать двоих детей. Сорок три года безупречной репутации.</p>
+
+            <p>На столе лежало заявление об увольнении от Кати Морозовой — её помощницы последние пять лет. "По семейным обстоятельствам", — сухо значилось в графе "причина". Но Марина помнила глаза девочки вчера утром. <span class="mirror-reflection">Глаза загнанного зверя</span>.</p>
+
+            <div class="quote">
+                — Я больше не могу, — шептала Катя, не поднимая взгляд. — Вы... вы везде видите подвох. В каждом моём слове, в каждом движении. Я не знаю, как вам угодить.
+            </div>
+
+            <p>— Катя, милая, — отвечала тогда Марина своим обычным мягким голосом, — я просто хочу, чтобы всё было идеально. Наш фонд помогает детям, понимаешь? Мы не можем позволить себе ошибок.</p>
+
+            <p>Но девочка только покачала головой и вышла.</p>
+
+            <p><em>Неблагодарная</em>, — подумала тогда Марина. <em>Я дала ей шанс, научила всему, а она...</em></p>
+
+            <p>Теперь, в т
