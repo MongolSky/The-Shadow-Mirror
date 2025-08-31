@@ -1,679 +1,1154 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Зеркала - Интерактивное чтение</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Georgia', serif;
-            background: #0f0f0f;
-            color: #e0e0e0;
-            overflow-x: hidden;
-            position: relative;
-            scroll-behavior: smooth;
-        }
+\<\!DOCTYPE html\>
 
-        /* Анимированный фон с зеркальными отражениями */
-        .mirror-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: radial-gradient(circle at 30% 70%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 30%, rgba(75, 0, 130, 0.08) 0%, transparent 50%),
-                        linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
-            z-index: -2;
-            animation: backgroundShift 20s ease-in-out infinite;
-        }
+\<html lang="ru"\>
+\<head\>
+\<meta charset="UTF-8"\>
+\<meta name="viewport" content="width=device-width, initial-scale=1.0"\>
+\<title\>Зеркала - Интерактивное чтение\</title\>
+\<style\>
+\* { margin: 0; padding: 0; box-sizing: border-box; }
 
-        @keyframes backgroundShift {
-            0%, 100% { filter: hue-rotate(0deg); }
-            50% { filter: hue-rotate(30deg); }
-        }
+```
+    body {
+        font-family: 'Georgia', serif;
+        background: #0f0f0f;
+        color: #e0e0e0;
+        overflow-x: hidden;
+        position: relative;
+        scroll-behavior: smooth;
+    }
 
-        /* Плавающие зеркальные фрагменты */
-        .mirror-fragments {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
+    /* Анимированный фон с зеркальными отражениями */
+    .mirror-bg {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: radial-gradient(circle at 30% 70%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
+                     radial-gradient(circle at 70% 30%, rgba(75, 0, 130, 0.08) 0%, transparent 50%),
+                     linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        z-index: -2;
+        animation: backgroundShift 20s ease-in-out infinite;
+    }
 
-        .fragment {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 3px;
-            animation: mirrorFloat 15s linear infinite;
-            transform: rotate(45deg);
-        }
+    @keyframes backgroundShift {
+        0%, 100% { filter: hue-rotate(0deg); }
+        50% { filter: hue-rotate(30deg); }
+    }
 
-        @keyframes mirrorFloat {
-            0% { 
-                transform: translateY(100vh) rotate(45deg) scale(0);
-                opacity: 0;
-            }
-            10%, 90% { 
-                opacity: 0.6;
-                transform: rotate(45deg) scale(1);
-            }
-            100% { 
-                transform: translateY(-100px) rotate(405deg) scale(0);
-                opacity: 0;
-            }
-        }
+    /* Плавающие зеркальные фрагменты */
+    .mirror-fragments {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: -1;
+    }
 
-        /* Навигация */
-        .navigation {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(15px);
-            z-index: 1000;
-            padding: 15px 0;
-            border-bottom: 2px solid transparent;
-            background-image: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)),
-                              linear-gradient(90deg, #8a2be2, #4b0082, #8a2be2);
-            background-origin: border-box;
-            background-clip: content-box, border-box;
-        }
+    .fragment {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 3px;
+        animation: mirrorFloat 15s linear infinite;
+        transform: rotate(45deg);
+    }
 
-        .nav-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding: 0 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .nav-item {
-            color: #b8b8b8;
-            text-decoration: none;
-            font-size: 14px;
-            padding: 10px 18px;
-            border-radius: 25px;
-            transition: all 0.4s ease;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.02);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-item::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .nav-item:hover::before {
-            left: 100%;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            color: #fff;
-            border-color: rgba(138, 43, 226, 0.6);
-            background: rgba(138, 43, 226, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
-        }
-
-        .nav-item.active {
-            color: #dda0dd;
-            background: rgba(138, 43, 226, 0.2);
-        }
-
-        /* Основной контейнер */
-        .container {
-            max-width: 900px;
-            margin: 90px auto 0;
-            padding: 50px 20px;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* Базовые стили секций */
-        .section {
-            margin-bottom: 80px;
+    @keyframes mirrorFloat {
+        0% { 
+            transform: translateY(100vh) rotate(45deg) scale(0);
             opacity: 0;
-            transform: translateY(50px);
-            transition: all 1s ease;
-            padding: 40px;
-            border-radius: 20px;
-            position: relative;
-            min-height: 600px;
         }
-
-        .section.visible {
-            opacity: 1;
-            transform: translateY(0);
+        10%, 90% { 
+            opacity: 0.6;
+            transform: rotate(45deg) scale(1);
         }
-
-        .section h1, .section h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 2;
+        100% { 
+            transform: translateY(-100px) rotate(405deg) scale(0);
+            opacity: 0;
         }
+    }
 
-        .section h1 {
-            font-size: 3em;
-            background: linear-gradient(45deg, #dda0dd, #8a2be2, #fff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(138, 43, 226, 0.5);
+    /* Навигация */
+    .navigation {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        background: rgba(0,0,0,0.9);
+        backdrop-filter: blur(15px);
+        z-index: 1000;
+        padding: 15px 0;
+        border-bottom: 2px solid transparent;
+        background-image: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)),
+                          linear-gradient(90deg, #8a2be2, #4b0082, #8a2be2);
+        background-origin: border-box;
+        background-clip: content-box, border-box;
+    }
+
+    .nav-container {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 0 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .nav-item {
+        color: #b8b8b8;
+        text-decoration: none;
+        font-size: 14px;
+        padding: 10px 18px;
+        border-radius: 25px;
+        transition: all 0.4s ease;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.02);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-item::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .nav-item:hover::before {
+        left: 100%;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+        color: #fff;
+        border-color: rgba(138, 43, 226, 0.6);
+        background: rgba(138, 43, 226, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
+    }
+
+    .nav-item.active {
+        color: #dda0dd;
+        background: rgba(138, 43, 226, 0.2);
+    }
+
+    /* Основной контейнер */
+    .container {
+        max-width: 900px;
+        margin: 90px auto 0;
+        padding: 50px 20px;
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Базовые стили секций */
+    .section {
+        margin-bottom: 80px;
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 1s ease;
+        padding: 40px;
+        border-radius: 20px;
+        position: relative;
+        min-height: 600px;
+    }
+
+    .section.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .section h1, .section h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .section h1 {
+        font-size: 3em;
+        background: linear-gradient(45deg, #dda0dd, #8a2be2, #fff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 30px rgba(138, 43, 226, 0.5);
+    }
+
+    .section h2 {
+        font-size: 2.2em;
+        color: #dda0dd;
+        text-shadow: 0 0 20px rgba(221, 160, 221, 0.3);
+    }
+
+    .section p {
+        line-height: 1.9;
+        margin-bottom: 25px;
+        font-size: 1.15em;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Уникальные стили для каждой главы */
+    
+    /* Заголовок */
+    #title {
+        background: radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, transparent 70%);
+        border: 2px solid transparent;
+        background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+                          linear-gradient(45deg, #8a2be2, #4b0082, #dda0dd);
+        background-origin: border-box;
+        background-clip: content-box, border-box;
+        text-align: center;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    #title::before {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 200px; height: 200px;
+        border: 2px solid rgba(221, 160, 221, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: mirrorPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes mirrorPulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
+    }
+
+    /* Глава 1 - Безупречность */
+    #chapter1 {
+        background: linear-gradient(135deg, rgba(70, 130, 180, 0.05) 0%, rgba(25, 25, 112, 0.05) 100%);
+        border-left: 5px solid #4682b4;
+        position: relative;
+    }
+
+    #chapter1::before {
+        content: '';
+        position: absolute;
+        top: 20px; right: 20px;
+        width: 80px; height: 120px;
+        border: 3px solid rgba(70, 130, 180, 0.3);
+        border-radius: 10px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+    }
+
+    /* Глава 2 - Трещина */
+    #chapter2 {
+        background: linear-gradient(45deg, rgba(220, 20, 60, 0.03) 0%, rgba(139, 0, 0, 0.05) 100%);
+        border-left: 5px solid #dc143c;
+        position: relative;
+    }
+
+    #chapter2::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: url('data:image/svg+xml,<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 100 100"><path d="M20,20 Q50,60 80,20" stroke="rgba(220,20,60,0.2)" stroke-width="2" fill="none"/></svg>') no-repeat center;
+        background-size: 200px 100px;
+        opacity: 0.3;
+    }
+
+    /* Глава 3 - Зеркало */
+    #chapter3 {
+        background: radial-gradient(circle at center, rgba(138, 43, 226, 0.08) 0%, transparent 70%);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        position: relative;
+    }
+
+    #chapter3::before {
+        content: '';
+        position: absolute;
+        top: 30px; right: 30px;
+        width: 100px; height: 100px;
+        border-radius: 50%;
+        border: 2px solid rgba(138, 43, 226, 0.4);
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+
+    /* Глава 4 - Метод зеркальных вопросов */
+    #chapter4 {
+        background: linear-gradient(90deg, rgba(255, 215, 0, 0.03) 0%, rgba(255, 140, 0, 0.05) 100%);
+        border-left: 5px solid #ffd700;
+        border-right: 5px solid #ff8c00;
+    }
+
+    #chapter4 .highlight-box {
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+    /* Глава 5 - Первые открытия */
+    #chapter5 {
+        background: linear-gradient(120deg, rgba(32, 178, 170, 0.05) 0%, rgba(0, 139, 139, 0.03) 100%);
+        border-left: 5px solid #20b2aa;
+    }
+
+    /* Глава 6 - Техника принятия тени */
+    #chapter6 {
+        background: linear-gradient(225deg, rgba(75, 0, 130, 0.08) 0%, rgba(138, 43, 226, 0.05) 100%);
+        border-left: 5px solid #4b0082;
+        border-right: 5px solid #8a2be2;
+    }
+
+    /* Глава 7 - Эмоциональный детектив */
+    #chapter7 {
+        background: linear-gradient(315deg, rgba(255, 99, 71, 0.05) 0%, rgba(255, 69, 0, 0.03) 100%);
+        border-left: 5px solid #ff6347;
+    }
+
+    /* Глава 8 - Новые отношения */
+    #chapter8 {
+        background: linear-gradient(60deg, rgba(50, 205, 50, 0.05) 0%, rgba(34, 139, 34, 0.03) 100%);
+        border-left: 5px solid #32cd32;
+    }
+
+    /* Глава 9 - Метод зеркального сострадания */
+    #chapter9 {
+        background: linear-gradient(180deg, rgba(186, 85, 211, 0.08) 0%, rgba(147, 112, 219, 0.05) 100%);
+        border-left: 5px solid #ba55d3;
+        border-right: 5px solid #9370db;
+    }
+
+    /* Глава 10 - Прощение */
+    #chapter10 {
+        background: linear-gradient(270deg, rgba(255, 182, 193, 0.05) 0%, rgba(255, 160, 122, 0.03) 100%);
+        border-left: 5px solid #ffb6c1;
+    }
+
+    /* Глава 11 - Новые отношения */
+    #chapter11 {
+        background: linear-gradient(45deg, rgba(64, 224, 208, 0.05) 0%, rgba(72, 209, 204, 0.03) 100%);
+        border-left: 5px solid #40e0d0;
+    }
+
+    /* Эпилог */
+    #epilogue {
+        background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.1) 0%, rgba(255, 140, 0, 0.05) 50%, transparent 100%);
+        border: 2px solid transparent;
+        background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                          linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
+        background-origin: border-box;
+        background-clip: content-box, border-box;
+        text-align: center;
+    }
+
+    /* Приложение */
+    #appendix {
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(75, 0, 130, 0.05) 100%);
+        border: 2px dashed rgba(138, 43, 226, 0.4);
+    }
+
+    /* Специальные элементы */
+    .quote {
+        font-style: italic;
+        font-size: 1.3em;
+        margin: 30px 0;
+        padding: 25px;
+        border-left: 4px solid #8a2be2;
+        background: rgba(138, 43, 226, 0.05);
+        border-radius: 0 15px 15px 0;
+        position: relative;
+    }
+
+    .quote::before {
+        content: '“';
+        position: absolute;
+        top: -10px; left: 10px;
+        font-size: 3em;
+        color: #8a2be2;
+        opacity: 0.3;
+    }
+
+    .technique-box {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        margin: 30px 0;
+        position: relative;
+    }
+
+    .technique-box h3 {
+        color: #dda0dd;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .technique-list {
+        list-style: none;
+        padding-left: 20px;
+    }
+
+    .technique-list li {
+        margin: 15px 0;
+        position: relative;
+        padding-left: 25px;
+    }
+
+    .technique-list li::before {
+        content: '◆';
+        position: absolute;
+        left: 0;
+        color: #8a2be2;
+        font-size: 1.2em;
+    }
+
+    /* Интерактивные элементы */
+    .mirror-reflection {
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .mirror-reflection:hover {
+        transform: scale(1.05);
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+    }
+
+    .mirror-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        border-radius: 20px;
+        padding: 30px;
+        margin: 25px 0;
+        transform: perspective(1000px) rotateY(5deg);
+        transition: all 0.5s ease;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .mirror-card:hover {
+        transform: perspective(1000px) rotateY(0deg) translateY(-5px);
+        box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2);
+    }
+
+    /* Прогресс чтения */
+    .reading-progress {
+        position: fixed;
+        top: 74px; left: 0;
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #8a2be2, #dda0dd);
+        z-index: 999;
+        transition: width 0.3s ease;
+    }
+
+    /* Мобильная навигация */
+    .mobile-nav {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(15px);
+        z-index: 1000;
+        padding: 12px 20px;
+        border-bottom: 2px solid rgba(138, 43, 226, 0.3);
+    }
+
+    .mobile-nav-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .mobile-nav-menu {
+        color: #dda0dd;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(138, 43, 226, 0.5);
+        transition: all 0.3s ease;
+        user-select: none;
+    }
+
+    .mobile-nav-menu:hover {
+        background: rgba(138, 43, 226, 0.2);
+    }
+
+    .mobile-nav-title {
+        color: #fff;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .mobile-dropdown {
+        position: absolute;
+        top: 100%; left: 0;
+        width: 100%;
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(15px);
+        border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease;
+    }
+
+    .mobile-dropdown.active {
+        max-height: 800px;
+    }
+
+    .mobile-dropdown-item {
+        display: block;
+        color: #b8b8b8;
+        text-decoration: none;
+        padding: 15px 25px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+
+    .mobile-dropdown-item:hover {
+        background: rgba(138, 43, 226, 0.1);
+        color: #fff;
+        transform: translateX(10px);
+    }
+
+    /* Signature */
+    .author-signature {
+        margin-top: 100px;
+        text-align: center;
+        padding: 60px 20px;
+        border-top: 2px solid transparent;
+        background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+                          linear-gradient(90deg, transparent, #8a2be2, transparent);
+        background-origin: border-box;
+        background-clip: content-box, border-box;
+    }
+
+    .signature-line {
+        width: 300px;
+        height: 2px;
+        background: linear-gradient(to right, transparent, #8a2be2, #dda0dd, #8a2be2, transparent);
+        margin: 0 auto 30px;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .navigation { display: none; }
+        .mobile-nav { display: block; }
+        .container { 
+            padding: 20px 15px; 
+            margin-top: 70px; 
         }
-
-        .section h2 {
-            font-size: 2.2em;
-            color: #dda0dd;
-            text-shadow: 0 0 20px rgba(221, 160, 221, 0.3);
-        }
-
-        .section p {
-            line-height: 1.9;
-            margin-bottom: 25px;
-            font-size: 1.15em;
-            position: relative;
-            z-index: 2;
-        }
-
-        /* Уникальные стили для каждой главы */
-        
-        /* Заголовок */
-        #title {
-            background: radial-gradient(circle at center, rgba(138, 43, 226, 0.1) 0%, transparent 70%);
-            border: 2px solid transparent;
-            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
-                              linear-gradient(45deg, #8a2be2, #4b0082, #dda0dd);
-            background-origin: border-box;
-            background-clip: content-box, border-box;
-            text-align: center;
+        .section { 
+            padding: 25px 20px;
+            margin-bottom: 50px;
             min-height: 400px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
+        .section h1 { font-size: 2.2em; }
+        .section h2 { font-size: 1.8em; }
+        .section p { font-size: 1.05em; }
+    }
 
-        #title::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 200px; height: 200px;
-            border: 2px solid rgba(221, 160, 221, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: mirrorPulse 4s ease-in-out infinite;
-        }
+    @media (max-width: 480px) {
+        .section h1 { font-size: 1.8em; }
+        .section h2 { font-size: 1.5em; }
+        .section p { font-size: 1.05em; }
+    }
 
-        @keyframes mirrorPulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
-        }
+    /* Анимация появления текста */
+    .text-reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.6s ease;
+    }
 
-        /* Глава 1 - Безупречность */
-        #chapter1 {
-            background: linear-gradient(135deg, rgba(70, 130, 180, 0.05) 0%, rgba(25, 25, 112, 0.05) 100%);
-            border-left: 5px solid #4682b4;
-            position: relative;
-        }
+    .text-reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-        #chapter1::before {
-            content: '';
-            position: absolute;
-            top: 20px; right: 20px;
-            width: 80px; height: 120px;
-            border: 3px solid rgba(70, 130, 180, 0.3);
-            border-radius: 10px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
-        }
+    /* Специальный эффект для важных цитат */
+    .shadow-quote {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        border-radius: 15px;
+        padding: 25px;
+        margin: 30px 0;
+        font-style: italic;
+        color: #dda0dd;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
 
-        /* Глава 2 - Трещина */
-        #chapter2 {
-            background: linear-gradient(45deg, rgba(220, 20, 60, 0.03) 0%, rgba(139, 0, 0, 0.05) 100%);
-            border-left: 5px solid #dc143c;
-            position: relative;
-        }
+    .shadow-quote::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -100%;
+        width: 100%; height: calc(100% + 4px);
+        background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.3), transparent);
+        animation: shadowSweep 3s ease-in-out infinite;
+    }
 
-        #chapter2::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20,20 Q50,60 80,20" stroke="rgba(220,20,60,0.2)" stroke-width="2" fill="none"/></svg>') no-repeat center;
-            background-size: 200px 100px;
-            opacity: 0.3;
-        }
+    @keyframes shadowSweep {
+        0%, 100% { left: -100%; }
+        50% { left: 100%; }
+    }
+</style>
+```
 
-        /* Глава 3 - Зеркало */
-        #chapter3 {
-            background: radial-gradient(circle at center, rgba(138, 43, 226, 0.08) 0%, transparent 70%);
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            position: relative;
-        }
+\</head\>
 
-        #chapter3::before {
-            content: '';
-            position: absolute;
-            top: 30px; right: 30px;
-            width: 100px; height: 100px;
-            border-radius: 50%;
-            border: 2px solid rgba(138, 43, 226, 0.4);
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        }
+\<body\>
+\<div class="mirror-bg"\>\</div\>
+\<div class="mirror-fragments"\>\</div\>
+\<div class="reading-progress" id="readingProgress"\>\</div\>
 
-        /* Глава 4 - Метод зеркальных вопросов */
-        #chapter4 {
-            background: linear-gradient(90deg, rgba(255, 215, 0, 0.03) 0%, rgba(255, 140, 0, 0.05) 100%);
-            border-left: 5px solid #ffd700;
-            border-right: 5px solid #ff8c00;
-        }
+```
+<nav class="mobile-nav">
+    <div class="mobile-nav-content">
+        <div class="mobile-nav-menu" onclick="toggleMobileMenu()">Главы ▼</div>
+        <div class="mobile-nav-title">Зеркала</div>
+    </div>
+    <div class="mobile-dropdown" id="mobileDropdown">
+        <a href="#title" class="mobile-dropdown-item" onclick="closeMobileMenu()">Начало</a>
+        <a href="#chapter1" class="mobile-dropdown-item" onclick="closeMobileMenu()">1. Безупречность</a>
+        <a href="#chapter2" class="mobile-dropdown-item" onclick="closeMobileMenu()">2. Трещина</a>
+        <a href="#chapter3" class="mobile-dropdown-item" onclick="closeMobileMenu()">3. Зеркало</a>
+        <a href="#chapter4" class="mobile-dropdown-item" onclick="closeMobileMenu()">4. Зеркальные вопросы</a>
+        <a href="#chapter5" class="mobile-dropdown-item" onclick="closeMobileMenu()">5. Первые открытия</a>
+        <a href="#chapter6" class="mobile-dropdown-item" onclick="closeMobileMenu()">6. Принятие тени</a>
+        <a href="#chapter7" class="mobile-dropdown-item" onclick="closeMobileMenu()">7. Эмоциональный детектив</a>
+        <a href="#chapter8" class="mobile-dropdown-item" onclick="closeMobileMenu()">8. Возвращение</a>
+        <a href="#chapter9" class="mobile-dropdown-item" onclick="closeMobileMenu()">9. Зеркальное сострадание</a>
+        <a href="#chapter10" class="mobile-dropdown-item" onclick="closeMobileMenu()">10. Прощение</a>
+        <a href="#chapter11" class="mobile-dropdown-item" onclick="closeMobileMenu()">11. Новые отношения</a>
+        <a href="#epilogue" class="mobile-dropdown-item" onclick="closeMobileMenu()">Эпилог</a>
+        <a href="#appendix" class="mobile-dropdown-item" onclick="closeMobileMenu()">Методики</a>
+    </div>
+</nav>
 
-        #chapter4 .highlight-box {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 10px;
-            font-weight: bold;
-        }
+<nav class="navigation">
+    <div class="nav-container">
+        <a href="#title" class="nav-item active">Начало</a>
+        <a href="#chapter1" class="nav-item">1. Безупречность</a>
+        <a href="#chapter2" class="nav-item">2. Трещина</a>
+        <a href="#chapter3" class="nav-item">3. Зеркало</a>
+        <a href="#chapter4" class="nav-item">4. Зеркальные вопросы</a>
+        <a href="#chapter5" class="nav-item">5. Первые открытия</a>
+        <a href="#chapter6" class="nav-item">6. Принятие тени</a>
+        <a href="#chapter7" class="nav-item">7. Эмоциональный детектив</a>
+        <a href="#chapter8" class="nav-item">8. Возвращение</a>
+        <a href="#chapter9" class="nav-item">9. Зеркальное сострадание</a>
+        <a href="#chapter10" class="nav-item">10. Прощение</a>
+        <a href="#chapter11" class="nav-item">11. Новые отношения</a>
+        <a href="#epilogue" class="nav-item">Эпилог</a>
+        <a href="#appendix" class="nav-item">Методики</a>
+    </div>
+</nav>
 
-        /* Глава 5 - Первые открытия */
-        #chapter5 {
-            background: linear-gradient(120deg, rgba(32, 178, 170, 0.05) 0%, rgba(0, 139, 139, 0.03) 100%);
-            border-left: 5px solid #20b2aa;
-        }
+<div class="container">
+    <section id="title" class="section">
+        <h1>Зеркала</h1>
+        <p style="text-align: center; font-size: 1.3em; color: #dda0dd; margin-top: 30px;">
+            <em>История о пути от проекций к принятию себя</em>
+        </p>
+    </section>
 
-        /* Глава 6 - Техника принятия тени */
-        #chapter6 {
-            background: linear-gradient(225deg, rgba(75, 0, 130, 0.08) 0%, rgba(138, 43, 226, 0.05) 100%);
-            border-left: 5px solid #4b0082;
-            border-right: 5px solid #8a2be2;
-        }
+    <section id="chapter1" class="section">
+        <h2>Глава первая. Безупречность</h2>
+        [cite_start]<p>Марина Светлова сидела в своём кабинете на сорок втором этаже, глядя на город через панорамные окна. [cite: 1] Директор крупнейшего благотворительного фонда, лауреат премии "Женщина года", мать двоих детей. [cite_start]Сорок три года безупречной репутации. [cite: 1] [cite_start]На столе лежало заявление об увольнении от Кати Морозовой — её помощницы последние пять лет. [cite: 1] "По семейным обстоятельствам", — сухо значилось в графе "причина". Но Марина помнила глаза девочки вчера утром. [cite_start]Глаза загнанного зверя. [cite: 1]</p>
 
-        /* Глава 7 - Эмоциональный детектив */
-        #chapter7 {
-            background: linear-gradient(315deg, rgba(255, 99, 71, 0.05) 0%, rgba(255, 69, 0, 0.03) 100%);
-            border-left: 5px solid #ff6347;
-        }
+        <div class="quote">
+            [cite_start]— Я больше не могу, — шептала Катя, не поднимая взгляд. [cite: 1] — Вы... вы везде видите подвох. В каждом моём слове, в каждом движении. [cite_start]Я не знаю, как вам угодить. [cite: 1]
+        </div>
 
-        /* Глава 8 - Новые отношения */
-        #chapter8 {
-            background: linear-gradient(60deg, rgba(50, 205, 50, 0.05) 0%, rgba(34, 139, 34, 0.03) 100%);
-            border-left: 5px solid #32cd32;
-        }
+        <p>— Катя, милая, — отвечала тогда Марина своим обычным мягким голосом, — я просто хочу, чтобы всё было идеально. Наш фонд помогает детям, понимаешь? [cite_start]Мы не можем позволить себе ошибок. [cite: 1]</p>
 
-        /* Глава 9 - Метод зеркального сострадания */
-        #chapter9 {
-            background: linear-gradient(180deg, rgba(186, 85, 211, 0.08) 0%, rgba(147, 112, 219, 0.05) 100%);
-            border-left: 5px solid #ba55d3;
-            border-right: 5px solid #9370db;
-        }
+        [cite_start]<p>Но девочка только покачала головой и вышла. [cite: 1]</p>
 
-        /* Глава 10 - Прощение */
-        #chapter10 {
-            background: linear-gradient(270deg, rgba(255, 182, 193, 0.05) 0%, rgba(255, 160, 122, 0.03) 100%);
-            border-left: 5px solid #ffb6c1;
-        }
+        [cite_start]<p><em>Неблагодарная</em>, — подумала тогда Марина. [cite: 1] [cite_start]<em>Я дала ей шанс, научила всему, а она...</em> [cite: 1]</p>
 
-        /* Глава 11 - Новые отношения */
-        #chapter11 {
-            background: linear-gradient(45deg, rgba(64, 224, 208, 0.05) 0%, rgba(72, 209, 204, 0.03) 100%);
-            border-left: 5px solid #40e0d0;
-        }
+        [cite_start]<p>Теперь, в тишине кабинета, эта мысль почему-то не приносила облегчения. [cite: 1] За пять лет сменилось семь помощников. За последние два года из отдела ушли трое лучших сотрудников. [cite_start]Все "по семейным обстоятельствам". [cite: 1] [cite_start]Все с одинаковым выражением усталости в глазах. [cite: 1]</p>
 
-        /* Эпилог */
-        #epilogue {
-            background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.1) 0%, rgba(255, 140, 0, 0.05) 50%, transparent 100%);
-            border: 2px solid transparent;
-            background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-                              linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
-            background-origin: border-box;
-            background-clip: content-box, border-box;
-            text-align: center;
-        }
+        [cite_start]<p>Марина встала, подошла к зеркалу в углу кабинета. [cite: 1] [cite_start]Отражение показало ей женщину с безупречной укладкой, дорогим костюмом и улыбкой, которая никогда не сползала с лица. [cite: 1] [cite_start]Даже наедине с собой. [cite: 1]</p>
 
-        /* Приложение */
-        #appendix {
-            background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(75, 0, 130, 0.05) 100%);
-            border: 2px dashed rgba(138, 43, 226, 0.4);
-        }
+        <p>— В чём дело со мной? [cite_start]— шепнула она зеркалу. [cite: 1]</p>
 
-        /* Специальные элементы */
-        .quote {
-            font-style: italic;
-            font-size: 1.3em;
-            margin: 30px 0;
-            padding: 25px;
-            border-left: 4px solid #8a2be2;
-            background: rgba(138, 43, 226, 0.05);
-            border-radius: 0 15px 15px 0;
-            position: relative;
-        }
+        [cite_start]<p>Зеркало молчало. [cite: 1]</p>
+    </section>
 
-        .quote::before {
-            content: '";
-            position: absolute;
-            top: -10px; left: 10px;
-            font-size: 3em;
-            color: #8a2be2;
-            opacity: 0.3;
-        }
+    <section id="chapter2" class="section">
+        <h2>Глава вторая. Трещина</h2>
+        <p>Домой Марина ехала в привычном состоянии контролируемого напряжения. [cite_start]По дороге прокручивала день: что можно было сделать лучше, кого нужно поправить завтра, какие недочёты устранить. [cite: 1] Восемнадцатилетний сын Денис встретил её в прихожей. [cite_start]Высокий, худой, с глазами, в которых она всё чаще видела отстранённость. [cite: 1]</p>
 
-        .technique-box {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            position: relative;
-        }
+        [cite_start]<p>— Мам, нужно поговорить. [cite: 1]</p>
 
-        .technique-box h3 {
-            color: #dda0dd;
-            margin-bottom: 15px;
-            text-align: center;
-        }
+        <p>— Конечно, солнышко. [cite_start]Только дай переодеться. [cite: 1]</p>
 
-        .technique-list {
-            list-style: none;
-            padding-left: 20px;
-        }
+        [cite_start]<p>— Нет, сейчас. [cite: 1]</p>
 
-        .technique-list li {
-            margin: 15px 0;
-            position: relative;
-            padding-left: 25px;
-        }
+        [cite_start]<p>Что-то в его голосе заставило её остановиться. [cite: 1]</p>
 
-        .technique-list li::before {
-            content: '◆';
-            position: absolute;
-            left: 0;
-            color: #8a2be2;
-            font-size: 1.2em;
-        }
+        [cite_start]<p>— Я не поступаю в медицинский. [cite: 1]</p>
 
-        /* Интерактивные элементы */
-        .mirror-reflection {
-            position: relative;
-            display: inline-block;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
+        [cite_start]<p>Марина почувствовала, как внутри всё сжимается в знакомый узел контроля. [cite: 1]</p>
 
-        .mirror-reflection:hover {
-            transform: scale(1.05);
-            text-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
-        }
+        <p>— Денис, мы это уже обсуждали. Врач — это престижная профессия, стабильность, возможность помогать людям. [cite_start]Как и я. [cite: 1]</p>
 
-        .mirror-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            border-radius: 20px;
-            padding: 30px;
-            margin: 25px 0;
-            transform: perspective(1000px) rotateY(5deg);
-            transition: all 0.5s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
+        <p>— Как ты? — Глаза сына потемнели. [cite_start]— Мам, ты знаешь, что говорят про тебя в фонде? [cite: 1]</p>
 
-        .mirror-card:hover {
-            transform: perspective(1000px) rotateY(0deg) translateY(-5px);
-            box-shadow: 0 20px 40px rgba(138, 43, 226, 0.2);
-        }
+        [cite_start]<p>— Что говорят? [cite: 1]</p>
 
-        /* Прогресс чтения */
-        .reading-progress {
-            position: fixed;
-            top: 74px; left: 0;
-            width: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #8a2be2, #dda0dd);
-            z-index: 999;
-            transition: width 0.3s ease;
-        }
+        <p>— Что ты... что ты разрушаешь людей. [cite_start]Что от твоей помощи все убегают. [cite: 1] [cite_start]Что ты видишь врагов там, где их нет. [cite: 1]</p>
 
-        /* Мобильная навигация */
-        .mobile-nav {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(15px);
-            z-index: 1000;
-            padding: 12px 20px;
-            border-bottom: 2px solid rgba(138, 43, 226, 0.3);
-        }
+        [cite_start]<p>Марина почувствовала, как мир накренивается. [cite: 1]</p>
 
-        .mobile-nav-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        [cite_start]<p>— Кто тебе это сказал? [cite: 1]</p>
 
-        .mobile-nav-menu {
-            color: #dda0dd;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(138, 43, 226, 0.5);
-            transition: all 0.3s ease;
-            user-select: none;
-        }
+        <p>— Неважно кто. Важно, что это правда, мам. Я вижу, как ты дома. [cite_start]Как ты находишь недостатки во всём. [cite: 1] В каждом слове папы, в каждой моей оценке. [cite_start]Как ты... [cite: 1]</p>
 
-        .mobile-nav-menu:hover {
-            background: rgba(138, 43, 226, 0.2);
-        }
+        <p>— Я забочусь! [cite_start]— голос Марины сорвался. [cite: 1] [cite_start]— Я хочу, чтобы у вас всё было идеально! [cite: 1]</p>
 
-        .mobile-nav-title {
-            color: #fff;
-            font-size: 14px;
-            font-weight: bold;
-        }
+        [cite_start]<p>— А кто сказал, что мы хотим твоей идеальности? [cite: 1]</p>
 
-        .mobile-dropdown {
-            position: absolute;
-            top: 100%; left: 0;
-            width: 100%;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease;
-        }
+        <p>Денис развернулся и ушёл в свою комнату. [cite_start]Хлопок двери прозвучал как выстрел. [cite: 1] Марина осталась стоять в прихожей, глядя на закрытую дверь. [cite_start]Впервые за много лет она почувствовала, что контроль ускользает из рук. [cite: 1]</p>
+    </section>
 
-        .mobile-dropdown.active {
-            max-height: 800px;
-        }
+    <section id="chapter3" class="section">
+        <h2>Глава третья. Зеркало</h2>
+        <p>Ночью Марина не могла уснуть. [cite_start]Она ворочалась в кровати, пока муж тихо сопел рядом. [cite: 1] [cite_start]Наконец встала и прошла в кабинет. [cite: 1] [cite_start]На столе лежала книга, которую дарила ей коллега год назад — что-то о психологии Юнга. [cite: 1] Марина тогда лишь вежливо поблагодарила. [cite_start]Психология казалась ей наукой для слабаков. [cite: 1]</p>
 
-        .mobile-dropdown-item {
-            display: block;
-            color: #b8b8b8;
-            text-decoration: none;
-            padding: 15px 25px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
+        [cite_start]<p>Теперь она открыла книгу наугад. [cite: 1]</p>
 
-        .mobile-dropdown-item:hover {
-            background: rgba(138, 43, 226, 0.1);
-            color: #fff;
-            transform: translateX(10px);
-        }
+        [cite_start]<p><em>"Тень — это та часть личности, которую мы не хотим видеть. Но чем сильнее мы её отрицаем, тем сильнее она проявляется в нашем отношении к другим. Мы видим в них то, что не можем принять в себе."</em> [cite: 1]</p>
 
-        /* Signature */
-        .author-signature {
-            margin-top: 100px;
-            text-align: center;
-            padding: 60px 20px;
-            border-top: 2px solid transparent;
-            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
-                              linear-gradient(90deg, transparent, #8a2be2, transparent);
-            background-origin: border-box;
-            background-clip: content-box, border-box;
-        }
+        [cite_start]<p>Марина перечитала абзац дважды. [cite: 1] [cite_start]Потом ещё раз. [cite: 1]</p>
 
-        .signature-line {
-            width: 300px;
-            height: 2px;
-            background: linear-gradient(to right, transparent, #8a2be2, #dda0dd, #8a2be2, transparent);
-            margin: 0 auto 30px;
-        }
+        [cite_start]<p><em>В каждом моём сотруднике я вижу лень, безответственность, желание всё сделать кое-как.</em> [cite: 1] <em>В сыне — легкомыслие и неблагодарность. [cite_start]В муже — равнодушие.</em> [cite: 1]</p>
 
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .navigation { display: none; }
-            .mobile-nav { display: block; }
-            .container { 
-                padding: 20px 15px; 
-                margin-top: 70px; 
+        [cite_start]<p><em>А что, если...</em> [cite: 1]</p>
+
+        [cite_start]<p>Она встала, подошла к зеркалу в кабинете. [cite: 1] На этот раз смотрела внимательно. [cite_start]Очень внимательно. [cite: 1]</p>
+
+        [cite_start]<p><em>Лень.</em> Когда она последний раз делала что-то просто ради удовольствия? [cite: 1] [cite_start]Когда последний раз позволяла себе "ничего не делать"? [cite: 1]</p>
+
+        [cite_start]<p><em>Безответственность.</em> А сколько раз она перекладывала ответственность за своё настроение на других? [cite: 1] [cite_start]"Они меня расстраивают", "они меня подводят"... [cite: 1]</p>
+
+        [cite_start]<p><em>Равнодушие.</em> Когда она последний раз спросила мужа, как дела, и действительно выслушала ответ, а не ждала паузы, чтобы рассказать о своих проблемах? [cite: 1] [cite_start]Зеркало показывало ей лицо усталой женщины, которая много лет играла роль безупречности, забыв, кто она на самом деле. [cite: 1]</p>
+    </section>
+
+    <section id="chapter4" class="section">
+        <h2>Глава четвёртая. Метод зеркальных вопросов</h2>
+        [cite_start]<p>На следующий день Марина записалась к психологу. [cite: 1] Алина Ермолова работала в центре, который сотрудничал с их фондом. [cite_start]Женщина лет пятидесяти, с добрыми глазами и удивительным спокойствием. [cite: 1]</p>
+
+        [cite_start]<p>— Расскажите, что вас привело. [cite: 1]</p>
+
+        <p>Марина рассказала. [cite_start]О сыне, о сотрудниках, о том чувстве, будто она стоит посреди разрушенного города и не понимает, кто его разрушил. [cite: 1]</p>
+
+        <p>— У меня есть для вас упражнение, — сказала Алина. [cite_start]— Называется "Зеркальные вопросы". [cite: 1] [cite_start]Каждый раз, когда вы ловите себя на сильной эмоции по отношению к другому человеку, задавайте себе три вопроса. [cite: 1]</p>
+
+        <div class="technique-box">
+            <h3>Зеркальные вопросы</h3>
+            <ol class="technique-list">
+                [cite_start]<li>Что именно меня так задевает в этом человеке? [cite: 1]</li>
+                [cite_start]<li>Где эта же черта живёт во мне? [cite: 1]</li>
+                [cite_start]<li>Чего я боюсь увидеть в себе? [cite: 1]</li>
+            </ol>
+        </div>
+
+        [cite_start]<p>— Это не означает, что все ваши наблюдения неверны, — добавила Алина. [cite: 1] [cite_start]— Но часто наша эмоциональная реакция говорит больше о нас, чем о других. [cite: 1]</p>
+
+        [cite_start]<p>— А если я правда вижу недостатки? [cite: 1]</p>
+
+        <p>— Тогда вы сможете говорить о них спокойно, без эмоций. [cite_start]Проверьте сами. [cite: 1]</p>
+    </section>
+
+    <section id="chapter5" class="section">
+        <h2>Глава пятая. Первые открытия</h2>
+        <p>Домой Марина шла пешком, обдумывая разговор. [cite_start]В метро напротив неё села девушка с ярко-розовыми волосами, которая громко разговаривала по телефону о своих романтических проблемах. [cite: 1]</p>
+
+        [cite_start]<p><em>Какая несерьёзная</em>, — подумала Марина автоматически, и тут же вспомнила о вопросах. [cite: 1]</p>
+
+        <p><em>Что меня задевает? [cite_start]Несерьёзность, легкомыслие.</em> [cite: 1]</p>
+
+        <p><em>Где эта черта во мне?</em> Марина остановилась. [cite_start]Когда она последний раз была легкомысленной? [cite: 1] [cite_start]Когда позволяла себе просто жить, не планируя и не контролируя каждый шаг? [cite: 1]</p>
+
+        <p><em>Чего боюсь увидеть?</em> Что если я сниму маску ответственности, то окажусь... пустой? [cite_start]Никчёмной? [cite: 1] [cite_start]Что если без постоянного контроля я стану... как эта девочка? [cite: 1]</p>
+
+        [cite_start]<p>Девушка засмеялась в трубку — звонко, искренне. [cite: 1] [cite_start]Марина поймала себя на мысли: <em>А когда я последний раз так смеялась?</em> [cite: 1]</p>
+
+        [cite_start]<p>Дома её ждал Денис. [cite: 1] [cite_start]Он сидел на кухне, делал домашнее задание по литературе. [cite: 1]</p>
+
+        [cite_start]<p>— Привет, — сказала она осторожно. [cite: 1]</p>
+
+        [cite_start]<p>— Привет. [cite: 1]</p>
+
+        <p>Обычно она бы сейчас проверила, что он делает, дала бы советы, поправила бы осанку. [cite_start]Вместо этого спросила: [cite: 1]</p>
+
+        [cite_start]<p>— Что читаешь? [cite: 1]</p>
+
+        <p>— Достоевского. [cite_start]"Преступление и наказание". [cite: 1]</p>
+
+        [cite_start]<p>— И как? [cite: 1]</p>
+
+        [cite_start]<p>Денис удивлённо посмотрел на неё. [cite: 1]</p>
+
+        [cite_start]<p>— Странный вопрос от тебя. [cite: 1]</p>
+
+        [cite_start]<p>— Почему? [cite: 1]</p>
+
+        [cite_start]<p>— Обычно ты спрашиваешь, какие оценки я получил и сделал ли я все упражнения. [cite: 1] Марина почувствовала укол. [cite_start]Но не защищалась. [cite: 1]</p>
+
+        [cite_start]<p>— А что, если сегодня я просто хочу узнать, что ты думаешь о Раскольникове? [cite: 1]</p>
+
+        [cite_start]<p>Денис помолчал, потом осторожно улыбнулся: [cite: 1]</p>
+
+        [cite_start]<p>— Он мне напоминает тебя. [cite: 1]</p>
+
+        [cite_start]<p>— Меня?! [cite: 1]</p>
+
+        [cite_start]<p>— Он тоже думает, что знает, как должно быть. [cite: 1] [cite_start]И тоже готов разрушить всё вокруг ради своей правильности. [cite: 1]</p>
+
+        [cite_start]<p><em>Зеркальный вопрос номер один: что меня задевает?</em> Обвинение в жестокости, в том, что я разрушаю людей ради своих принципов. [cite: 1] [cite_start]<em>Номер два: где это во мне?</em> Сколько людей ушло из-за моего стремления к идеальности? [cite: 1] [cite_start]Сколько отношений я разрушила, требуя соответствовать своим стандартам? [cite: 1]</p>
+
+        [cite_start]<p><em>Номер три: чего боюсь?</em> Что если я не буду требовательной, всё развалится. [cite: 1] [cite_start]Что если я приму несовершенство, то стану соучастницей хаоса. [cite: 1]</p>
+
+        [cite_start]<p>— Знаешь, — сказала она медленно, — а может, мы сходим в театр на выходных? [cite: 1] Посмотрим что-то не полезное. [cite_start]Что-то просто красивое. [cite: 1]</p>
+
+        [cite_start]<p>Денис отложил ручку и внимательно посмотрел на мать. [cite: 1]</p>
+
+        [cite_start]<p>— Мам, ты в порядке? [cite: 1]</p>
+
+        <p>— Нет, — честно ответила Марина. [cite_start]— Но я учусь. [cite: 1]</p>
+    </section>
+
+    <section id="chapter6" class="section">
+        <h2>Глава шестая. Техника "Список теней"</h2>
+        [cite_start]<p>На следующем сеансе Алина предложила ещё одно упражнение. [cite: 1]</p>
+
+        [cite_start]<p>— Составьте список людей, которые вас раздражают. [cite: 1] Живых или из книг, фильмов. Неважно. [cite_start]Главное — те, кто вызывает сильную эмоциональную реакцию. [cite: 1]</p>
+
+        [cite_start]<p>Марина составила: [cite: 1]</p>
+        <ul>
+            [cite_start]<li>Катя (бывшая помощница) — безответственная, всё время ищет лёгкие пути [cite: 1]</li>
+            [cite_start]<li>Сосед снизу — шумный, не думает о других [cite: 1]</li>
+            [cite_start]<li>Актриса из одного сериала — легкомысленная, истеричная [cite: 1]</li>
+            [cite_start]<li>Коллега Ольга — завистливая, подкалывает исподтишка [cite: 1]</li>
+            [cite_start]<li>Денис иногда — эгоистичный, неблагодарный [cite: 1]</li>
+        </ul>
+        [cite_start]<p>— Теперь, — сказала Алина, — напротив каждого имени напишите, какое качество вас больше всего бесит. [cite: 1] А потом честно ответьте себе: есть ли это качество в вас? [cite_start]Хотя бы в зачаточном состоянии? [cite: 1]</p>
+
+        [cite_start]<p><em>Катя — безответственность.</em> А сколько раз Марина перекладывала ответственность за своё настроение на других? [cite: 1] [cite_start]"Они меня бесят", "из-за них у меня стресс"... [cite: 1]</p>
+
+        [cite_start]<p><em>Сосед — эгоизм.</em> А разве её требования к идеальности не эгоистичны? [cite: 1] [cite_start]Разве она думает о том, каково другим соответствовать её стандартам? [cite: 1] [cite_start]<em>Актриса — истеричность.</em> Марина вспомнила свои внутренние монологи, когда что-то шло не по плану. [cite: 1] [cite_start]Разве это не истерика, только направленная внутрь? [cite: 1]</p>
+
+        <p><em>Ольга — зависть.</em> Сердце кольнуло. [cite_start]Да, она завидовала Ольге. [cite: 1] [cite_start]Её лёгкости в отношениях, способности ошибаться и не рассыпаться от этого в прах. [cite: 1]</p>
+
+        <p><em>Денис — неблагодарность.</em> А часто ли она сама благодарила? [cite_start]Мужа за то, что он просто рядом? [cite: 1] [cite_start]Сына за то, что он растёт честным человеком, несмотря на её контроль? [cite: 1]</p>
+
+        <p>— Что чувствуете? [cite_start]— спросила Алина. [cite: 1]</p>
+
+        <p>— Стыд, — тихо сказала Марина. — И... облегчение? [cite_start]Как будто я много лет несла тяжёлый рюкзак и только сейчас поняла, что могу его снять. [cite: 1]</p>
+    </section>
+
+    <section id="chapter7" class="section">
+        <h2>Глава седьмая. Практика "Принятие тени"</h2>
+        [cite_start]<p>— Теперь самое важное, — сказала Алина на третьем сеансе. [cite: 1] — Признать тень — это только половина работы. Вторая половина — принять её. [cite_start]Не полюбить, не оправдать. [cite: 1] [cite_start]Принять как часть себя. [cite: 1]</p>
+
+        [cite_start]<p>Она дала Марине новое упражнение: [cite: 1]</p>
+
+        <div class="technique-box">
+            <h3>"Диалог с тенью"</h3>
+            [cite_start]<p>Каждый вечер, перед сном, говорите с той частью себя, которую обычно отвергаете. [cite: 1] Говорите вслух или пишите. [cite_start]Начинайте так: "Привет, моя ленивая часть" или "Привет, моя завистливая часть". [cite: 1] [cite_start]Выясните, что она хочет сказать. [cite: 1]</p>
+        </div>
+
+        [cite_start]<p>В первый вечер Марина чувствовала себя идиоткой, разговаривая с зеркалом: [cite: 1]</p>
+
+        [cite_start]<p>— Привет, моя... ленивая часть. [cite: 1]</p>
+
+        [cite_start]<p>Молчание. [cite: 1]</p>
+
+        [cite_start]<p>— Ну, что ты хочешь? [cite: 1]</p>
+
+        [cite_start]<p><em>"Отдохнуть,"</em> — вдруг подумала она чужим голосом. [cite: 1] [cite_start]<em>"Просто полежать и ни о чём не думать. Посмотреть глупый фильм. Поесть мороженого, не считая калории."</em> [cite: 1]</p>
+
+        [cite_start]<p>— Но если я буду лениться, всё развалится. [cite: 1]</p>
+
+        [cite_start]<p><em>"А что, если не развалится? Что, если мир выдержит один день без твоего контроля?"</em> [cite: 1]</p>
+
+        [cite_start]<p>Марина задумалась. [cite: 1] [cite_start]А ведь правда — что если? [cite: 1]</p>
+
+        [cite_start]<p>На следующий вечер: [cite: 1]</p>
+
+        [cite_start]<p>— Привет, моя завистливая часть. [cite: 1] <em>"Я устала быть идеальной,"</em> — сразу ответил внутренний голос. [cite_start]<em>"Я завидую тем, кто может ошибаться и не корить себя за это. Кто может быть несовершенным и всё равно любимым."</em> [cite: 1]</p>
+
+        [cite_start]<p>— Но если я буду несовершенной, меня перестанут уважать. [cite: 1] [cite_start]<em>"А кто сказал, что тебя уважают сейчас? Или любят?"</em> [cite: 1]</p>
+
+        <p>Это больно кольнуло. [cite_start]Но это была правда. [cite: 1]</p>
+    </section>
+
+    <section id="chapter8" class="section">
+        <h2>Глава восьмая. Возвращение</h2>
+        [cite_start]<p>Через месяц работы с Алиной Марина почувствовала: что-то изменилось. [cite: 1] [cite_start]Не кардинально — она всё ещё замечала недочёты, всё ещё хотела, чтобы всё было хорошо. [cite: 1] [cite_start]Но теперь между импульсом "исправить" и действием появлялось пространство. [cite: 1]</p>
+
+        [cite_start]<p><em>Зеркальный вопрос: что меня задевает в этом человеке?</em> [cite: 1]</p>
+
+        [cite_start]<p><em>Где эта черта во мне?</em> [cite: 1]</p>
+
+        [cite_start]<p><em>Чего я боюсь увидеть?</em> [cite: 1]</p>
+
+        [cite_start]<p>На работе появилась новая помощница — Светлана, женщина сорока лет, с тремя детьми и уставшими глазами. [cite: 1] [cite_start]В первый день она опоздала на полчаса, потому что младший сын заболел. [cite: 1]</p>
+
+        <p>Старая Марина начала бы ледяным тоном объяснять важность пунктуальности. [cite_start]Новая Марина почувствовала знакомое раздражение, задала себе три вопроса и сказала: [cite: 1]</p>
+
+        [cite_start]<p>— Как сын? [cite: 1] [cite_start]Ничего серьёзного? [cite: 1]</p>
+
+        [cite_start]<p>Светлана удивлённо посмотрела на неё: [cite: 1]</p>
+
+        <p>— Температура. [cite_start]Пришлось ждать врача. [cite: 1]</p>
+
+        [cite_start]<p>— Понятно. [cite: 1] Если завтра будет то же самое, предупредите заранее. [cite_start]Мы что-нибудь придумаем. [cite: 1]</p>
+
+        [cite_start]<p>В глазах Светланы мелькнуло облегчение. [cite: 1] <em>Я тоже мать, — подумала Марина. [cite_start]— Я тоже знаю, что такое выбирать между работой и ребёнком.</em> [cite: 1]</p>
+    </section>
+
+    <section id="chapter9" class="section">
+        <h2>Глава девятая. Метод зеркального сострадания</h2>
+        [cite_start]<p>Как-то вечером муж пришёл домой и, не поздоровавшись, прошёл к холодильнику. [cite: 1] [cite_start]Марина почувствовала знакомое раздражение: <em>Невнимательный, равнодушный...</em> [cite: 1]</p>
+
+        <p>Стоп. [cite_start]Детектив. [cite: 1]</p>
+
+        [cite_start]<p><em>Что произошло?</em> Муж не поздоровался. [cite: 1]</p>
+
+        [cite_start]<p><em>Что подумала?</em> Он меня игнорирует. [cite: 1]</p>
+
+        [cite_start]<p><em>Что почувствовала?</em> Обида, одиночество. [cite: 1]</p>
+
+        [cite_start]<p><em>Как отреагировала?</em> Молча, надулась. [cite: 1]</p>
+
+        [cite_start]<p><em>Какая потребность не удовлетворена?</em> Потребность во внимании, в близости. [cite: 1]</p>
+
+        <p><em>Как могу удовлетворить её сама?</em> Пойти и обнять его. [cite_start]Или просто сказать: "Привет, дорогой, я скучала". [cite: 1]</p>
+
+        [cite_start]<p>Марина подошла к мужу и тихонько обняла его сзади. [cite: 1] [cite_start]Он вздрогнул, повернулся и обнял её в ответ. [cite: 1] [cite_start]Без слов. [cite: 1]</p>
+
+        [cite_start]<p>— Ужасный день, — сказал он, уткнувшись ей в плечо. [cite: 1]</p>
+
+        [cite_start]<p>Она молча гладила его по спине. [cite: 1] [cite_start]Впервые она не требовала внимания, а просто его давала. [cite: 1]</p>
+
+        [cite_start]<p>И это оказалось куда целительнее. [cite: 1]</p>
+    </section>
+
+    <section id="chapter10" class="section">
+        <h2>Глава десятая. Прощение</h2>
+        [cite_start]<p>Марина решила позвонить бывшей помощнице. [cite: 1] [cite_start]Долго набирала номер, потом стирала, потом набирала снова. [cite: 1]</p>
+
+        [cite_start]<p>— Алло, Катя? [cite: 1]</p>
+
+        <p>— Марина Сергеевна? [cite_start]Я... я что-то сделала не так? [cite: 1]</p>
+
+        [cite_start]<p>— Нет, что ты. [cite: 1] [cite_start]Я просто... хотела извиниться. [cite: 1]</p>
+
+        [cite_start]<p>Наступила долгая пауза. [cite: 1]</p>
+
+        [cite_start]<p>— За что? [cite: 1]</p>
+
+        [cite_start]<p>— За свою идеальность. [cite: 1] [cite_start]Она... она душила. [cite: 1] [cite_start]Я не знала тогда. [cite: 1]</p>
+
+        [cite_start]<p>— Всё в порядке, Марина Сергеевна, — голос Кати стал мягче. [cite: 1]</p>
+
+        [cite_start]<p>— Нет, не в порядке. [cite: 1] [cite_start]Я хочу, чтобы ты знала: то, что ты ушла — это не твоя вина. [cite: 1] [cite_start]Это была моя тень. [cite: 1]</p>
+
+        [cite_start]<p>— Вы... вы так изменились, — Катя заплакала. [cite: 1]</p>
+
+        [cite_start]<p>— Я стараюсь. [cite: 1] [cite_start]И... если хочешь, приходи в гости. [cite: 1] [cite_start]Просто так. [cite: 1] [cite_start]Без работы. [cite: 1]</p>
+
+        [cite_start]<p>В этот вечер Марина почувствовала, что прощает не только других. [cite: 1] [cite_start]Она прощает себя. [cite: 1] [cite_start]Себя, которая была слишком занята поддержанием фасада, чтобы увидеть, какой ущерб она наносит внутри. [cite: 1]</p>
+    </section>
+
+    <section id="chapter11" class="section">
+        <h2>Глава одиннадцатая. Новые отношения</h2>
+        [cite_start]<p>На следующий день Марина пошла в парк с сыном. [cite: 1] [cite_start]Они не говорили о планах на будущее, о поступлении, об оценках. [cite: 1] [cite_start]Они говорили о книгах, о музыке, о глупых мемах в интернете. [cite: 1]</p>
+
+        [cite_start]<p>— Денис, — сказала она вдруг, — я подумала. [cite: 1] [cite_start]Твой выбор — это твой выбор. [cite: 1] [cite_start]Я поддержу любое твоё решение. [cite: 1]</p>
+
+        [cite_start]<p>Сын взял её за руку. [cite: 1] [cite_start]Спустя много лет она почувствовала его тепло. [cite: 1]</p>
+
+        <p>— Спасибо, мам, — тихо сказал он. [cite_start]— Я тебя люблю. [cite: 1]</p>
+
+        [cite_start]<p>Марина посмотрела на него, и на этот раз её улыбка не была выученной. [cite: 1] [cite_start]Она была настоящей. [cite: 1] [cite_start]Она была отражением её собственного сердца. [cite: 1]</p>
+    </section>
+
+    <section id="epilogue" class="section">
+        <h2>Эпилог</h2>
+        [cite_start]<p>Прошло несколько лет. [cite: 1] [cite_start]Марина всё ещё работала в фонде, но теперь её называли "самым человечным директором". [cite: 1] [cite_start]Она по-прежнему стремилась к высокому качеству работы, но теперь она знала, что идеальность — это не отсутствие ошибок, а способность их исправлять с состраданием. [cite: 1]</p>
+
+        [cite_start]<p>Она всё ещё вела свой "Список теней". [cite: 1] [cite_start]И каждый раз, когда чьё-то поведение вызывало в ней сильную эмоцию, она задавала себе "Зеркальные вопросы". [cite: 1]</p>
+
+        [cite_start]<p>Её отношения с мужем и сыном стали крепче, чем когда-либо. [cite: 1] [cite_start]Она научилась видеть в них не свои ожидания, а подлинных людей. [cite: 1]</p>
+
+        [cite_start]<p>В её кабинете по-прежнему висело зеркало. [cite: 1]</p>
+
+        [cite_start]<p>Марина иногда подходила к нему, но больше не спрашивала: "Что со мной?" [cite: 1]</p>
+
+        [cite_start]<p>Она просто смотрела. [cite: 1]</p>
+
+        [cite_start]<p>И видела там не безупречный фасад, а живую женщину. [cite: 1] [cite_start]Со своими тенями, со своими шрамами, со своим несовершенством. [cite: 1]</p>
+
+        [cite_start]<p>И в её глазах, впервые за долгое время, было спокойствие. [cite: 1]</p>
+    </section>
+
+    <section id="appendix" class="section">
+        <h2>Приложение: Методики</h2>
+        <h3>1. Метод "Зеркальные вопросы"</h3>
+        [cite_start]<p>Когда вы чувствуете сильную негативную эмоцию по отношению к другому человеку, задайте себе 3 вопроса: [cite: 1]</p>
+        <ol>
+            [cite_start]<li>Что именно меня так задевает в этом человеке? [cite: 1]</li>
+            [cite_start]<li>Где эта же черта живёт во мне? [cite: 1]</li>
+            [cite_start]<li>Чего я боюсь увидеть в себе? [cite: 1]</li>
+        </ol>
+
+        <h3>2. Техника "Список теней"</h3>
+        [cite_start]<p>Составьте список людей, которые вас раздражают. [cite: 1] [cite_start]Напротив каждого имени напишите качество, которое вас больше всего раздражает. [cite: 1] [cite_start]Честно ответьте себе, есть ли это качество в вас. [cite: 1]</p>
+
+        <h3>3. Упражнение "Диалог с тенью"</h3>
+        [cite_start]<p>Каждый вечер разговаривайте или пишите с той частью себя, которую отвергаете. [cite: 1] [cite_start]Задавайте вопросы, например: "Привет, моя [название черты] часть. Что ты хочешь мне сказать?" [cite: 1] [cite_start]Выслушайте без осуждения. [cite: 1] [cite_start]Найдите здоровый способ удовлетворить её потребности. [cite: 1]</p>
+
+        <h3>4. Техника "Эмоциональный детектив"</h3>
+        [cite_start]<p>При сильных эмоциях исследуйте: [cite: 1]</p>
+        <ul>
+            [cite_start]<li>Что конкретно произошло? [cite: 1]</li>
+            [cite_start]<li>Что я об этом подумала? [cite: 1]</li>
+            [cite_start]<li>Что почувствовала? [cite: 1]</li>
+            [cite_start]<li>Как отреагировала? [cite: 1]</li>
+            [cite_start]<li>Какая моя потребность не удовлетворена? [cite: 1]</li>
+            [cite_start]<li>Как могу удовлетворить её сама? [cite: 1]</li>
+        </ul>
+
+        <h3>5. Метод "Зеркальное сострадание"</h3>
+        [cite_start]<p>Когда проявляется теневая черта, не корите себя. [cite: 1] [cite_start]Скажите: "Привет, моя [название черты] часть. Что тебе нужно?" [cite: 1] [cite_start]Выслушайте с состраданием. [cite: 1] [cite_start]Предложите более здоровую альтернативу. [cite: 1]</p>
+
+        <h3>6. Упражнение "Письмо себе из будущего"</h3>
+        [cite_start]<p>Представьте себя через 5 лет — мудрую и принявшую свою тень. [cite: 1] [cite_start]Напишите себе нынешней письмо от лица этой будущей себя. [cite: 1] [cite_start]Включите понимание, прощение и мудрые советы. [cite: 1]</p>
+
+        <h3>Ключевые принципы работы с тенью:</h3>
+
+        <p><strong>Помните:</strong></p>
+        <ul>
+            [cite_start]<li>Тень — не враг, а неинтегрированная часть личности. [cite: 1]</li>
+            [cite_start]<li>То, что мы отвергаем в себе, мы проецируем на других. [cite: 1]</li>
+            [cite_start]<li>Сильная эмоциональная реакция — сигнал о проекции. [cite: 1]</li>
+            [cite_start]<li>Принятие тени не значит потакание ей. [cite: 1]</li>
+            [cite_start]<li>Интеграция тени ведёт к целостности и подлинности. [cite: 1]</li>
+        </ul>
+
+        <p><strong>Признаки успешной работы:</strong></p>
+        <ul>
+            [cite_start]<li>Снижение эмоциональных реакций на других. [cite: 1]</li>
+            [cite_start]<li>Рост самосострадания. [cite: 1]</li>
+            [cite_start]<li>Улучшение отношений. [cite: 1]</li>
+            [cite_start]<li>Более ясное видение себя и других. [cite: 1]</li>
+        </ul>
+    </section>
+
+</div>
+
+<div class="author-signature">
+    <div class="signature-line"></div>
+    <p>К.О. (Команда Отражений)</p>
+</div>
+
+<script>
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.section');
+    const readingProgress = document.getElementById('readingProgress');
+    const mobileDropdown = document.getElementById('mobileDropdown');
+    
+    function updateActiveNavItem() {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (window.scrollY >= sectionTop - 100) {
+                current = section.getAttribute('id');
             }
-            .section { 
-                padding: 25px 20px;
-                margin-bottom: 50px;
-                min-height: 400px;
+        });
+
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.href.includes(current)) {
+                item.classList.add('active');
             }
-            .section h1 { font-size: 2.2em; }
-            .section h2 { font-size: 1.8em; }
-            .section p { font-size: 1.05em; }
+        });
+    }
+
+    function updateReadingProgress() {
+        const containerHeight = document.body.scrollHeight - window.innerHeight;
+        const scrolled = window.scrollY;
+        const progress = (scrolled / containerHeight) * 100;
+        readingProgress.style.width = progress + '%';
+    }
+
+    function animateOnScroll() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    }
+
+    function toggleMobileMenu() {
+        mobileDropdown.classList.toggle('active');
+    }
+
+    function closeMobileMenu() {
+        mobileDropdown.classList.remove('active');
+    }
+    
+    // Dynamic floating fragments
+    document.addEventListener('DOMContentLoaded', () => {
+        const fragmentsContainer = document.querySelector('.mirror-fragments');
+        const fragmentCount = 10;
+        for (let i = 0; i < fragmentCount; i++) {
+            const fragment = document.createElement('div');
+            fragment.classList.add('fragment');
+            const size = Math.random() * 20 + 10;
+            fragment.style.width = `${size}px`;
+            fragment.style.height = `${size}px`;
+            fragment.style.top = `${Math.random() * 100}%`;
+            fragment.style.left = `${Math.random() * 100}%`;
+            fragment.style.animationDelay = `${Math.random() * 10}s`;
+            fragmentsContainer.appendChild(fragment);
         }
+    });
 
-        @media (max-width: 480px) {
-            .section h1 { font-size: 1.8em; }
-            .section h2 { font-size: 1.5em; }
-            .section p { font-size: 1.05em; }
-        }
+    window.addEventListener('scroll', () => {
+        updateActiveNavItem();
+        updateReadingProgress();
+    });
 
-        /* Анимация появления текста */
-        .text-reveal {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.6s ease;
-        }
+    window.addEventListener('load', () => {
+        updateActiveNavItem();
+        updateReadingProgress();
+        animateOnScroll();
+    });
 
-        .text-reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
+</script>
+```
 
-        /* Специальный эффект для важных цитат */
-        .shadow-quote {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(138, 43, 226, 0.4);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            font-style: italic;
-            color: #dda0dd;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .shadow-quote::before {
-            content: '';
-            position: absolute;
-            top: -2px; left: -100%;
-            width: 100%; height: calc(100% + 4px);
-            background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.3), transparent);
-            animation: shadowSweep 3s ease-in-out infinite;
-        }
-
-        @keyframes shadowSweep {
-            0%, 100% { left: -100%; }
-            50% { left: 100%; }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="mirror-bg"></div>
-    <div class="mirror-fragments"></div>
-    <div class="reading-progress" id="readingProgress"></div>
-
-    <nav class="mobile-nav">
-        <div class="mobile-nav-content">
-            <div class="mobile-nav-menu" onclick="toggleMobileMenu()">Главы ▼</div>
-            <div class="mobile-nav-title">Зеркала</div>
-        </div>
-        <div class="mobile-dropdown" id="mobileDropdown">
-            <a href="#title" class="mobile-dropdown-item" onclick="closeMobileMenu()">Начало</a>
-            <a href="#chapter1" class="mobile-dropdown-item" onclick="closeMobileMenu()">1. Безупречность</a>
-            <a href="#chapter2" class="mobile-dropdown-item" onclick="closeMobileMenu()">2. Трещина</a>
-            <a href="#chapter3" class="mobile-dropdown-item" onclick="closeMobileMenu()">3. Зеркало</a>
-            <a href="#chapter4" class="mobile-dropdown-item" onclick="closeMobileMenu()">4. Зеркальные вопросы</a>
-            <a href="#chapter5" class="mobile-dropdown-item" onclick="closeMobileMenu()">5. Первые открытия</a>
-            <a href="#chapter6" class="mobile-dropdown-item" onclick="closeMobileMenu()">6. Принятие тени</a>
-            <a href="#chapter7" class="mobile-dropdown-item" onclick="closeMobileMenu()">7. Эмоциональный детектив</a>
-            <a href="#chapter8" class="mobile-dropdown-item" onclick="closeMobileMenu()">8. Возвращение</a>
-            <a href="#chapter9" class="mobile-dropdown-item" onclick="closeMobileMenu()">9. Зеркальное сострадание</a>
-            <a href="#chapter10" class="mobile-dropdown-item" onclick="closeMobileMenu()">10. Прощение</a>
-            <a href="#chapter11" class="mobile-dropdown-item" onclick="closeMobileMenu()">11. Новые отношения</a>
-            <a href="#epilogue" class="mobile-dropdown-item" onclick="closeMobileMenu()">Эпилог</a>
-            <a href="#appendix" class="mobile-dropdown-item" onclick="closeMobileMenu()">Методики</a>
-        </div>
-    </nav>
-
-    <nav class="navigation">
-        <div class="nav-container">
-            <a href="#title" class="nav-item active">Начало</a>
-            <a href="#chapter1" class="nav-item">1. Безупречность</a>
-            <a href="#chapter2" class="nav-item">2. Трещина</a>
-            <a href="#chapter3" class="nav-item">3. Зеркало</a>
-            <a href="#chapter4" class="nav-item">4. Зеркальные вопросы</a>
-            <a href="#chapter5" class="nav-item">5. Первые открытия</a>
-            <a href="#chapter6" class="nav-item">6. Принятие тени</a>
-            <a href="#chapter7" class="nav-item">7. Эмоциональный детектив</a>
-            <a href="#chapter8" class="nav-item">8. Возвращение</a>
-            <a href="#chapter9" class="nav-item">9. Зеркальное сострадание</a>
-            <a href="#chapter10" class="nav-item">10. Прощение</a>
-            <a href="#chapter11" class="nav-item">11. Новые отношения</a>
-            <a href="#epilogue" class="nav-item">Эпилог</a>
-            <a href="#appendix" class="nav-item">Методики</a>
-        </div>
-    </nav>
-
-    <div class="container">
-        <section id="title" class="section">
-            <h1>Зеркала</h1>
-            <p style="text-align: center; font-size: 1.3em; color: #dda0dd; margin-top: 30px;">
-                <em>История о пути от проекций к принятию себя</em>
-            </p>
-        </section>
-
-        <section id="chapter1" class="section">
-            <h2>Глава первая. Безупречность</h2>
-            <p>Марина Светлова сидела в своём кабинете на сорок втором этаже, глядя на город через панорамные окна. Директор крупнейшего благотворительного фонда, лауреат премии "Женщина года", мать двоих детей. Сорок три года безупречной репутации.</p>
-
-            <p>На столе лежало заявление об увольнении от Кати Морозовой — её помощницы последние пять лет. "По семейным обстоятельствам", — сухо значилось в графе "причина". Но Марина помнила глаза девочки вчера утром. Глаза загнанного зверя.</p>
-
-            <div class="quote">
-                — Я больше не могу, — шептала Катя, не поднимая взгляд. — Вы... вы везде видите подвох. В каждом моём слове, в каждом движении. Я не знаю, как вам угодить.
-            </div>
-
-            <p>— Катя, милая, — отвечала тогда Марина своим обычным мягким голосом, — я просто хочу, чтобы всё было идеально. Наш фонд помогает детям, понимаешь? Мы не можем позволить себе ошибок.</p>
-
-            <p>Но девочка только покачала головой и вышла.</p>
-
-            <p><em>Неблагодарная</em>, — подумала тогда Марина. <em>Я дала ей шанс, научила всему, а она...</em></p>
-
-            <p>Теперь, в тишине кабинета, эта мысль почему-то не приносила облегчения. За пять лет сменилось семь помощников. За последние два года из отдела ушли трое лучших сотрудников. Все "по семейным обстоятельствам". Все с одинаковым выражением усталости в глазах.</p>
-
-            <p>Марина встала, подошла к зеркалу в углу кабинета. Отражение показало ей женщину с безупречной укладкой, дорогим костюмом и улыбкой
+\</body\>
+\</html\>
